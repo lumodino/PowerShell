@@ -259,8 +259,6 @@ function Get-ITILTermDefinition {
         $busqueda = $busqueda -replace "[iIiÍ]","[iIiÍ]"
         $busqueda = $busqueda -replace "[oóOÓ]","[oóOÓ]"
         $busqueda = $busqueda -replace "[uUúÚ]","[uUúÚ]"
-        #IMPORTACION DEL ARCHIVO CON EL GLOSARIO DE TÉRMINOS
-        $Glosario = Import-Csv \\ulagares.unirioja.loc\HelpDesk\Scripts_powershell\ITILV4TERMS.CSV -Delimiter ";"
         if($English){
             #RESULTADO DE BÚSQUEDA DEL TERMINO EN INGLÉS
             return $glosario | where-object {$_.term -match $busqueda -or $_.english -match $busqueda} | select-object term,english | sort-object term | format-list
