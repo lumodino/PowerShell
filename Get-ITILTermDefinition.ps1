@@ -2,7 +2,7 @@
 .SYNOPSIS
     Búsqueda del glosario de términos de ITIL4 en línea de comandos.
 .DESCRIPTION
-    Búsqueda de texto en las definiciones del glosario de términos de ITIL4 en línea de comandos. Sacado del PDF de glosario de términos de ITIL V4
+    Búsqueda de texto en las definiciones del glosario de términos de ITIL4 en línea de comandos. Sacado del PDF de glosario de términos de ITIL V4. Si no hay parámetros muestra un término aleatorio.
 .EXAMPLE
     itil instrucción
     Busca las definiciones de los términos o términos que incluyan la palabra "instrucción"
@@ -15,11 +15,14 @@
 .EXAMPLE
     Get-IITLTermDefinicion incidente
     Busca las definiciones de los términos o términos que incluyan la palabra "inclidente"
+.EXAMPLE
+    itil
+    Muestra un término aleatorio de itil
 #>
 function Get-ITILTermDefinition {
     param(
         #TEXTO DE BUSQUEDA POR PALABAS SIN ESPECIFICAR COMILLAS
-        [Parameter(ValueFromRemainingArguments,Mandatory=$true)]
+        [Parameter(ValueFromRemainingArguments,Mandatory=$false)]
         [string]$busqueda,
         #OPCION DE BÚSQUEDA DE TEXTO EN INGLÉS
         [Parameter(Mandatory=$false)]
@@ -245,20 +248,26 @@ function Get-ITILTermDefinition {
     [pscustomobject]@{term='workaround';termino='solución temporal';english='A solution that reduces or eliminates the impact of an incident or problem for which a full resolution is not yet available. Some workarounds reduce the likelihood of incidents.';spanish='Solución que reduce o elimina el impacto de un incidente o problema mientras no está disponible una solución definitiva. Algunas soluciones temporales reducen la probabilidad de que se produzcan incidentes.'}
     [pscustomobject]@{term='workforce and talent management practice';termino='práctica de gestión de la fuerza laboral y el talento';english='The practice of ensuring that an organization has the right people with the appropriate skills and knowledge and in the correct roles to support its business objectives.';spanish='Práctica que consiste en asegurar que una organización dispone de las personas adecuadas, con las habilidades y el conocimiento pertinentes, asignadas en los roles correctos para respaldar sus objetivos de negocio.'}
     )
-    
-    #SE SUSTITUYEN LAS VOCALES POR PATRONES REGEX PARA BUSQUEDA CON Y SIN ACENTOS
-    $busqueda = $busqueda -replace "[aAáÁ]","[aAáÁ]"
-    $busqueda = $busqueda -replace "[eEéÉ]","[eEéÉ]"
-    $busqueda = $busqueda -replace "[iIiÍ]","[iIiÍ]"
-    $busqueda = $busqueda -replace "[oóOÓ]","[oóOÓ]"
-    $busqueda = $busqueda -replace "[uUúÚ]","[uUúÚ]"
-        
-    #SI SE USA EL PARAMETRO EN INGLÉS SE HACE UNA BÚSQUEDA POR LOS CAMPOS EN INGLÉS, SI NO EN CASTELLANO, DEVUELVE LOS RESULTADOS
-    if($English){
-        return $glosario | where-object {$_.term -match $busqueda -or $_.english -match $busqueda} | select-object term,english | sort-object term | format-list
+    if(-not $busqueda){
+        #SI NO HAY PARAMETRO DE BUSQUEDA SE MUESTRA UN TERMINO ALEATORIO
+        Write-Output "TÉRMINO ITIL DEL DÍA:"
+        $glosario[(get-random($glosario.count))] | select-object termino,spanish | format-list
     }else{
-        return $glosario | where-object {$_.termino -match $busqueda -or $_.spanish -match $busqueda} | select-object termino,spanish | sort-object termino | format-list
+        #SUSTITUCION DE CARÁCTERES ACENTUADOS PARA BÚSQUEDA POR REGEX
+        $busqueda = $busqueda -replace "[aAáÁ]","[aAáÁ]"
+        $busqueda = $busqueda -replace "[eEéÉ]","[eEéÉ]"
+        $busqueda = $busqueda -replace "[iIiÍ]","[iIiÍ]"
+        $busqueda = $busqueda -replace "[oóOÓ]","[oóOÓ]"
+        $busqueda = $busqueda -replace "[uUúÚ]","[uUúÚ]"
+        #IMPORTACION DEL ARCHIVO CON EL GLOSARIO DE TÉRMINOS
+        $Glosario = Import-Csv \\ulagares.unirioja.loc\HelpDesk\Scripts_powershell\ITILV4TERMS.CSV -Delimiter ";"
+        if($English){
+            #RESULTADO DE BÚSQUEDA DEL TERMINO EN INGLÉS
+            return $glosario | where-object {$_.term -match $busqueda -or $_.english -match $busqueda} | select-object term,english | sort-object term | format-list
+        }else{
+            #RESULTADO DE BÚSQUEDA DEL TERMINO EN CASTELLANO
+            return $glosario | where-object {$_.termino -match $busqueda -or $_.spanish -match $busqueda} | select-object termino,spanish | sort-object termino | format-list
+        }
     }
-        
 }
 Set-Alias -name ITIL -Value Get-ITILTermDefinition
